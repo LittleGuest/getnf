@@ -1,0 +1,2 @@
+# getnf
+download nerd fonts
