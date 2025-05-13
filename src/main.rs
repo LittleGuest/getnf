@@ -1,4 +1,4 @@
-use std::{fs, io::Read, path::PathBuf};
+use std::{env, fs, io::Read, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 use dialoguer::MultiSelect;
@@ -65,17 +65,31 @@ fn font_dir(global: bool) -> PathBuf {
             if global {
                 "/usr/local/share/fonts/".into()
             } else {
-                (env!("HOME").to_string() + "/.local/share/fonts/").into()
+                let xdg_data_home = env::var("XDG_DATA_HOME")
+                    .unwrap_or_else(|_| format!("{}/.local/share", env::var("HOME").unwrap()));
+                PathBuf::from(xdg_data_home).join("fonts")
             }
         }
         "macos" => {
             if global {
                 "/Library/Fonts".into()
             } else {
-                (env!("HOME").to_string() + "/Library/Fonts").into()
+                PathBuf::from(env::var("HOME").unwrap()).join("Library/Fonts")
             }
         }
-        "windows" => "".into(),
+        "windows" => {
+            if global {
+                let windir = env::var("WINDIR").unwrap_or_else(|_| "C:\\Windows".to_string());
+                PathBuf::from(windir).join("Fonts")
+            } else {
+                let local_appdata =
+                    std::env::var("LOCALAPPDATA").expect("未找到 LOCALAPPDATA 环境变量");
+                PathBuf::from(local_appdata)
+                    .join("Microsoft")
+                    .join("Windows")
+                    .join("Fonts")
+            }
+        }
         _ => "".into(),
     }
 }
